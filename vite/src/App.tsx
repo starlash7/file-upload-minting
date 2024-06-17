@@ -3,6 +3,7 @@ import { Contract, ethers } from "ethers";
 import { JsonRpcSigner } from "ethers";
 import { ChangeEvent, FC, useEffect, useState } from "react";
 import mintNftAbi from "./mintNftAbi.json";
+import axios from "axios";
 
 const App: FC = () => {
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null);
@@ -20,6 +21,26 @@ const App: FC = () => {
     }
   };
 
+  const uploadImage = async (formData: FormData) => {
+    try {
+      const response = await axios.post(
+        "https://api.pinata.cloud/pinning/pinFileToIPFS",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            pinata_api_key: import.meta.env.VITE_PINATA_KEY,
+            pinata_secret_api_key: import.meta.env.VITE_PINATA_SECRET,
+          },
+        }
+      );
+
+      return `https://slime-project.mypinata.cloud/ipfs/${response.data.IpfsHash}`;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const onChangeFile = async (e: ChangeEvent<HTMLInputElement>) => {
     try {
       if (!e.currentTarget.files) return;
@@ -27,6 +48,10 @@ const App: FC = () => {
       const formData = new FormData();
 
       formData.append("file", e.currentTarget.files[0]);
+
+      const imageUrl = await uploadImage(formData);
+
+      console.log(imageUrl);
     } catch (error) {
       console.error(error);
     }
